@@ -111,7 +111,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       y: options.hidden ? window.innerHeight + 30 : start,
       config: config.gentle,
     });
-  }, [options.hidden]);
+  }, [options.hidden, set, start]);
 
   /** Set display:none when the drawer is hidden. */
   const display = y.to(py => (py < window.innerHeight + 30 ? 'block' : 'none'));

@@ -4,9 +4,7 @@ import { Default as BottomSheet } from '../stories/BottomSheet.stories';
 import { defaultBottomSheetOptions } from '../src/BottomSheet';
 
 describe('<BottomSheet />', () => {
-  const { getByText, getByTestId, rerender } = render(
-    <BottomSheet>sheet</BottomSheet>
-  );
+  const { getByText } = render(<BottomSheet>sheet</BottomSheet>);
 
   const sheet = getByText(/sheet/i);
   const closedHeight =
