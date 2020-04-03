@@ -1,5 +1,6 @@
 import React, { PropsWithChildren } from 'react';
 import { BottomSheet, BottomSheetProps } from '../src';
+import { boolean } from '@storybook/addon-knobs';
 
 export default {
   title: 'BottomSheet',
@@ -9,4 +10,8 @@ export default {
 // you consume the story in a test.
 export const Default = (
   props?: Partial<PropsWithChildren<BottomSheetProps>>
-) => <BottomSheet {...props} />;
+) => (
+  <BottomSheet peekHeights={[250]} hidden={boolean('hidden', false)} {...props}>
+    <div style={{ height: 900 }}>el</div>
+  </BottomSheet>
+);

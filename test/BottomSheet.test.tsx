@@ -1,10 +1,41 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, fireEvent, createEvent } from '@testing-library/react';
 import { Default as BottomSheet } from '../stories/BottomSheet.stories';
+import { defaultBottomSheetOptions } from '../src/BottomSheet';
 
 describe('<BottomSheet />', () => {
-  it('renders without crashing and displays children', () => {
-    const { getByText } = render(<BottomSheet>Look ma, bottom!</BottomSheet>);
-    expect(getByText(/look ma/i)).toBeInTheDocument();
+  const { getByText, getByTestId, rerender } = render(
+    <BottomSheet>sheet</BottomSheet>
+  );
+
+  const sheet = getByText(/sheet/i);
+  const closedHeight =
+    window.innerHeight - defaultBottomSheetOptions.defaultHeight;
+
+  it('renders in the correct starting position', () => {
+    expect(sheet).toHaveStyle(`
+        transform: translate3d(0,${closedHeight}px,0);
+      `);
+  });
+
+  it('should move when dragged', () => {
+    const dragStart = createEvent.mouseDown(sheet, {
+      clientX: 20,
+      clientY: window.innerHeight - 1,
+      buttons: 1,
+    });
+
+    const dragEnd = createEvent.mouseUp(sheet, {
+      clientX: 20,
+      clientY: window.innerHeight,
+      buttons: 1,
+    });
+
+    fireEvent(sheet, dragStart);
+    fireEvent(sheet, dragEnd);
+
+    expect(sheet).toHaveStyle(`
+          transform: translate3d(0,${closedHeight - 200}px,0);
+        `);
   });
 });
