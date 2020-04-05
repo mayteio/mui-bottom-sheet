@@ -100,7 +100,15 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     positions.push(...options.peekHeights.map(h => window.innerHeight - h));
   if (options.fullHeight) positions.push(0);
 
-  /** The extra - 50 is for the dag - ensuring we don't overpull the sheet */
+  /**
+   * Two problems here
+   * 1. if fullHeight = false and the child has a height greater than the max position, it should stop at the max position and allow scroll
+   * 2. peek heights are not allowing touch scroll when at full height (window.innherHeight)
+   *
+   * Consider re-writing and figuring out tests?
+   */
+
+  /** The extra options.threshold is for the dag - ensuring we don't overpull the sheet */
   const maxHeight =
     window.innerHeight > height
       ? Math.abs(window.innerHeight - height + options.threshold)
@@ -111,6 +119,11 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
   /** Track dragging state so we can prevent scroll */
   const draggingRef = useRef(false);
+
+  /**
+   * Track container so we can scrollTop position and only
+   * begin pulling the drawer down when we're completely scrolled.
+   */
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   /** Handle gesture */
@@ -136,8 +149,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
        * bigger than the window, then this should be 0.
        */
       if (
-        my <
-        maxHeight - (window.innerHeight > height ? options.threshold : 0)
+        my > 0 &&
+        my < maxHeight - (window.innerHeight > height ? options.threshold : 0)
       ) {
         cancel && cancel();
       }
@@ -172,6 +185,11 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     }
   );
 
+  /** Prevent scroll while there is more to be swiped up */
+  const touchAction = y.to(v => (v > 0 ? 'none' : 'auto'));
+
+  const overflow = y.to(v => (v <= maxHeight ? 'scroll' : 'hidden'));
+
   /** If hidden is set to true, hide the whole thing, */
   useEffect(() => {
     set({
@@ -185,11 +203,6 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     py < window.innerHeight + HIDDEN_THRESHOLD ? 'block' : 'none'
   );
 
-  /** Prevent scroll while there is more to be swiped up */
-  const touchAction = y.to(v =>
-    height > window.innerHeight && v > 0 ? 'none' : 'auto'
-  );
-
   /** Show/hide background */
   const backdropActiveAt = positions
     .sort()
@@ -201,6 +214,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     opacity: y.to([backdropActiveAt as number, start], [1, 0], 'clamp'),
     display: y.to(py => (py < window.innerHeight ? 'block' : 'none')),
   };
+
+  console.log(touchAction.getValue(), overflow.getValue());
 
   return (
     <>
@@ -220,6 +235,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           y,
           display,
           touchAction,
+          overflow,
         }}
       >
         <div ref={ref}>{children}</div>
