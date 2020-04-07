@@ -14,8 +14,13 @@ export const Default = (
   <>
     can interact
     <BottomSheet
+      background={
+        <div style={{ backgroundColor: '#f00', height: '100%' }}>
+          background
+        </div>
+      }
+      peekHeights={[250, 400]}
       {...props}
-      background={<div style={{ backgroundColor: '#f00' }}>background</div>}
     >
       <div style={{ height: 900, width: 20, border: '2px dotted #aaa' }} />
     </BottomSheet>

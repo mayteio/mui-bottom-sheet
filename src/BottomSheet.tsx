@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { a, useSpring, config } from 'react-spring';
+import { a, useSpring, config, interpolate } from 'react-spring';
 import { useDrag } from 'react-use-gesture';
 import useMeasure from 'react-use-measure';
 import { ResizeObserver } from '@juggle/resize-observer';
@@ -114,7 +114,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = props => {
   }
 
   /** Add peek heights if they are less than the max height */
-  peekHeights?.forEach(peekHeight => {
+  peekHeights?.sort().forEach(peekHeight => {
     if (peekHeight < height && peekHeight < window.innerHeight) {
       stops.push(stopPosition(peekHeight));
     }
@@ -177,14 +177,6 @@ export const BottomSheet: React.FC<BottomSheetProps> = props => {
     }
   );
 
-  /**
-   * Lock the scroll of the bottom sheet while it hasn't been
-   * pulled to its maximum possible height.
-   *
-   * +2 is to allow for scrolling when the sheet is rubberbanding
-   */
-  const overflow = y.to(v => (v > Math.min(...stops) ? 'hidden' : 'scroll'));
-
   /** If the hidden prop is true, hide the entire sheet off-screen */
   useEffect(() => {
     set({
@@ -195,6 +187,19 @@ export const BottomSheet: React.FC<BottomSheetProps> = props => {
 
   /** Set display:none when the drawer is hidden. */
   const display = y.to(py => (py < window.innerHeight + 30 ? 'block' : 'none'));
+
+  /**
+   * Lock the scroll of the bottom sheet while it hasn't been
+   * pulled to its maximum possible height.
+   */
+  const overflow = y.to(v => (v > Math.min(...stops) ? 'hidden' : 'scroll'));
+
+  /** Aggregate main sheet props into an object for spreading */
+  const sheetStyle = {
+    y,
+    display,
+    overflow,
+  };
 
   /** Animated styles for the backdrop based off the y position */
   const backdropActiveAt = stops
@@ -212,18 +217,41 @@ export const BottomSheet: React.FC<BottomSheetProps> = props => {
     display: y.to(py => (py < defaultPosition && backdrop ? 'block' : 'none')),
   };
 
+  /**
+   * Background is an image or carousel that slides up behind the main
+   * bottom sheet, similar to the venue images on Google maps.
+   */
+  const backgroundStyle = {
+    height: Math.min(...stops.filter(n => n > 0)),
+    y: y.to(
+      [...stops].reverse(),
+      stops.map((_stop, i, arr) =>
+        i === arr.length - 1 || i === arr.length - 2 ? defaultPosition : 0
+      ),
+      'clamp'
+    ),
+  };
+
   return (
     <>
       <a.div
-        style={{ ...styles.backdrop, ...userStyles.backdrop, ...backdropStyle }}
-      />
-      <a.div
         {...bind()}
         ref={containerRef}
-        style={{ ...styles.root, ...userStyles.root, y, overflow, display }}
+        style={{ ...styles.root, ...userStyles.root, y, ...sheetStyle }}
       >
         <div ref={measureRef}>{props.children}</div>
       </a.div>
+      {background && (
+        <a.div
+          style={{ ...styles.background, ...backgroundStyle }}
+          className="background"
+        >
+          {background}
+        </a.div>
+      )}
+      <a.div
+        style={{ ...styles.backdrop, ...userStyles.backdrop, ...backdropStyle }}
+      />
     </>
   );
 };
