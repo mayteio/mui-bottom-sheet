@@ -11,18 +11,20 @@ export default {
 export const Default = (
   props?: Partial<PropsWithChildren<BottomSheetProps>>
 ) => (
-  <>
-    can interact
+  <div style={{ fontFamily: 'sans-serif', padding: 24 }}>
+    Map will go here
     <BottomSheet
       background={
-        <div style={{ backgroundColor: '#f00', height: '100%' }}>
-          background
+        <div style={{ backgroundColor: '#eee', height: '100%', padding: 24 }}>
+          Location image sliders can go here
         </div>
       }
       peekHeights={[250, 400]}
       {...props}
     >
-      <div style={{ height: 900, width: 20, border: '2px dotted #aaa' }} />
+      <div style={{ height: 900, width: '100%', padding: 24 }}>
+        Waypoint information carousel here
+      </div>
     </BottomSheet>
-  </>
+  </div>
 );

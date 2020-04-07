@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { a, useSpring, config, interpolate } from 'react-spring';
+import { a, useSpring, config } from 'react-spring';
 import { useDrag } from 'react-use-gesture';
 import useMeasure from 'react-use-measure';
 import { ResizeObserver } from '@juggle/resize-observer';
@@ -68,7 +68,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = props => {
       right: 0,
       top: 0,
       zIndex: 1198,
-      backgroundColor: 'rgba(0,0,0,0.2)',
+      backgroundColor: 'rgba(0,0,0,0.3)',
     },
     background: {
       position: 'fixed' as React.CSSProperties['position'],
@@ -78,7 +78,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = props => {
       width: '100%',
     },
     root: {
-      background: '#eee',
+      background: '#fff',
       boxShadow: '0 -10px 20px rgba(0,0,0,0.3)',
       width: '100%',
       minHeight: defaultHeight,
@@ -208,11 +208,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = props => {
     .find(n => n !== defaultPosition && n < defaultPosition);
   const backdropStyle = {
     /** backdrop should only begin to fade in after first stop */
-    opacity: y.to(
-      [backdropActiveAt as number, defaultPosition],
-      [1, 0],
-      'clamp'
-    ),
+    opacity: y.to([backdropActiveAt as number, defaultPosition], [1, 0]),
     /** Set display none when backdrop isn't show so you can interact with the page */
     display: y.to(py => (py < defaultPosition && backdrop ? 'block' : 'none')),
   };
@@ -226,7 +222,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = props => {
     y: y.to(
       [...stops].reverse(),
       stops.map((_stop, i, arr) =>
-        i === arr.length - 1 || i === arr.length - 2 ? defaultPosition : 0
+        i === arr.length - 1 || i === arr.length - 2 ? window.innerHeight : 0
       ),
       'clamp'
     ),

@@ -1,14 +1,14 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react';
-import { Default as BottomSheet } from '../stories/ABottomSheet.stories';
-import { defaultOptions } from '../src/BottomSheet2';
+import { Default as BottomSheet } from '../stories/BottomSheet.stories';
+import { defaultOptions } from '../src/BottomSheet';
 
 describe('<BottomSheet />', () => {
   // setup, put here so we re-use the element.
-  const { getByText, debug, rerender } = render(<BottomSheet>el</BottomSheet>);
-  const el = getByText('el');
+  const { getByText, debug } = render(<BottomSheet>el</BottomSheet>);
+  const el = getByText(/waypoint/i);
 
-  test('should render', () => {
+  test.only('should render', () => {
     expect(el).toBeInTheDocument();
   });
 
