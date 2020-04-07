@@ -1,52 +1,67 @@
 import React from 'react';
-import { render, fireEvent, createEvent, wait } from '@testing-library/react';
-import { Default as BottomSheet } from '../stories/BottomSheet.stories';
-import { defaultBottomSheetOptions } from '../src/BottomSheet';
+import { render, fireEvent } from '@testing-library/react';
+import { Default as BottomSheet } from '../stories/ABottomSheet.stories';
+import { defaultOptions } from '../src/BottomSheet2';
 
 describe('<BottomSheet />', () => {
-  const { getByText, debug } = render(
-    <BottomSheet>
-      <div style={{ height: 900 }}>sheet</div>
-    </BottomSheet>
-  );
+  // setup, put here so we re-use the element.
+  const { getByText, debug, rerender } = render(<BottomSheet>el</BottomSheet>);
+  const el = getByText('el');
 
-  const sheet = getByText(/sheet/i);
-  const element = sheet.parentNode;
-  if (!element) throw Error('No parent node found');
-
-  const closedHeight =
-    window.innerHeight - defaultBottomSheetOptions.defaultHeight;
-
-  it('renders in the correct starting position', async () => {
-    await wait(() =>
-      expect(element).toHaveStyle(`
-        transform: translate3d(0,${closedHeight}px,0);
-      `)
-    );
+  test('should render', () => {
+    expect(el).toBeInTheDocument();
   });
 
-  it('should move when dragged', () => {
-    console.log(window.innerHeight, sheet.offsetHeight);
+  test('should resize to defaultHeight when children height is too short', () => {
+    expect(el).toHaveStyle(`
+    min-height: 100px
+    `);
+  });
 
-    const dragStart = createEvent.mouseDown(sheet, {
+  test('should position itself at the bottom of the screen', () => {
+    expect(el).toHaveStyle(`
+    transform: translate3d(0,${window.innerHeight -
+      defaultOptions.defaultHeight}px,0)
+      `);
+  });
+
+  test('should move and snap back to original position', () => {
+    fireEvent.mouseDown(el, {
       clientX: 20,
-      clientY: window.innerHeight - 1,
+      clientY: window.innerHeight - 50,
       buttons: 1,
     });
 
-    const dragEnd = createEvent.mouseUp(sheet, {
+    fireEvent.mouseMove(window, {
       clientX: 20,
-      clientY: window.innerHeight,
+      clientY: window.innerHeight - 100,
       buttons: 1,
     });
 
-    fireEvent(element, dragStart);
-    fireEvent(element, dragEnd);
+    // moved
+    expect(el).toHaveStyle(`
+    transform: translate3d(0,${window.innerHeight -
+      defaultOptions.defaultHeight -
+      50}px,0)
+      `);
 
-    expect(element).toHaveStyle(`
-          transform: translate3d(0,${closedHeight - 200}px,0);
+    fireEvent.mouseUp(window, {
+      clientX: 20,
+      clientY: window.innerHeight - 100,
+      buttons: 1,
+    });
+
+    expect(el).toHaveStyle(`
+      transform: translate3d(0,${window.innerHeight -
+        defaultOptions.defaultHeight}px,0)
         `);
   });
 
-  debug();
+  test('should snap to max height if content is smaller than window height', () => {
+    // rerender();
+    // <BottomSheet>
+    //   el <div style={{ height: 300 }} />
+    // </BottomSheet>
+    debug();
+  });
 });
