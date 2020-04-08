@@ -1,10 +1,22 @@
 import React, { PropsWithChildren } from 'react';
 import { BottomSheet, BottomSheetProps } from '../src/BottomSheet';
 import { boolean, number, object } from '@storybook/addon-knobs';
+import { addParameters } from '@storybook/react';
 import backgroundImage from './static/buildings.jpg';
 
+addParameters({
+  docs: {
+    prepareForInline: StoryFn => (
+      <div style={{ height: '100vh' }}>
+        {' '}
+        <StoryFn />
+      </div>
+    ),
+  },
+});
+
 export default {
-  title: 'A BottomSheet',
+  title: 'BottomSheet',
   component: BottomSheet,
   decorators: [
     StoryFn => (
