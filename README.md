@@ -2,7 +2,7 @@
 
 > 👆 A delightful bottom sheet component for react up to material design spec
 
-The bottom sheet in the Google Maps app for a location is _really_ nice. I set out to recreate that level of UX detail with a modern `BottomSheet` for React. [Try it in the storybook]().
+The bottom sheet in the Google Maps app for a location is _really_ nice. I set out to recreate that level of UX detail with a modern `BottomSheet` for React. [Try it in the storybook](https://mayteio.github.io/mui-bottom-sheet/).
 
 ![Bottom Sheet Demo](https://user-images.githubusercontent.com/43975092/78733881-0f751300-798a-11ea-8c9c-62cda96fc35b.gif)
 
