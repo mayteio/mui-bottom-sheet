@@ -1,15 +1,15 @@
 import React, { useEffect, useRef } from 'react';
-import { a, config, useSpring } from 'react-spring';
+import { a, useSpring, config } from 'react-spring';
 import { useDrag } from 'react-use-gesture';
 import useMeasure from 'react-use-measure';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { closest } from './util';
 
 export interface bottomSheetOptions {
-  /** Backdrop that slides up relative to current swiped height. Defaults to nothing. */
-  backdrop?: React.ReactElement;
+  /** Show backdrop that darkens as the sheet is pulled up. Defaults to true. */
+  backdrop?: boolean;
   /** Root component */
-  component?: string | React.Component;
+  background?: React.ReactElement;
   /** Sheet height when in closed state. Defaults to 100px. */
   defaultHeight: number;
   /** Whether to go to full screen height. defaults to false. */
@@ -28,218 +28,226 @@ export interface BottomSheetProps extends Partial<bottomSheetOptions> {}
 
 export interface bottomSheetStyles {
   backdrop?: Record<string, any>;
+  background?: Record<string, any>;
   root?: Record<string, any>;
 }
 
-const HIDDEN_THRESHOLD = 30;
-
-export const defaultBottomSheetOptions = {
+/** Some sensible defaults */
+export const defaultOptions = {
+  backdrop: true,
+  background: null,
   defaultHeight: 100,
-  fullHeight: false,
-  hidden: false,
   threshold: 70,
+  peekHeights: [],
+  hidden: false,
+  fullHeight: true,
 };
 
-export const BottomSheet: React.FC<BottomSheetProps> = ({
-  children,
-  styles: userStyles = { root: {}, backdrop: {} },
-  ...props
-}) => {
-  /** measure the component height for clamping */
-  const [ref, { height }] = useMeasure({ polyfill: ResizeObserver });
-
-  /** Default options, assumes a threshold of 70 */
-  const optionDefaults: bottomSheetOptions = {
-    ...defaultBottomSheetOptions,
-    defaultHeight: height - 70 > 100 ? 100 : height,
-  };
-
-  /** Build options with defaults */
-  const options = {
-    ...optionDefaults,
+export const BottomSheet: React.FC<BottomSheetProps> = props => {
+  /** Merge defaults and provided options */
+  const {
+    backdrop,
+    background,
+    defaultHeight,
+    peekHeights,
+    threshold,
+    hidden,
+    styles: userStyles = { root: {}, backdrop: {} },
+    fullHeight,
+  } = {
+    ...defaultOptions,
     ...props,
   };
 
-  /** Could move this to a function */
-  const styles = {
+  /** Generate stylesheet */
+  const styles: bottomSheetStyles = {
     backdrop: {
       position: 'fixed' as React.CSSProperties['position'],
       bottom: 0,
       left: 0,
       right: 0,
       top: 0,
+      zIndex: 1198,
+      backgroundColor: 'rgba(0,0,0,0.3)',
+    },
+    background: {
+      position: 'fixed' as React.CSSProperties['position'],
       zIndex: 1199,
-      backgroundColor: 'rgba(0,0,0,0.2)',
+      left: 0,
+      top: 0,
+      width: '100%',
     },
     root: {
-      position: 'fixed' as React.CSSProperties['position'],
-      top: 0,
-      left: 0,
+      background: '#fff',
+      boxShadow: '0 -10px 20px rgba(0,0,0,0.3)',
       width: '100%',
+      minHeight: defaultHeight,
       maxHeight: '100%',
-      height: options.fullHeight ? '100%' : 'auto',
-      backgroundColor: '#fff',
+      position: 'fixed' as React.CSSProperties['position'],
+      left: 0,
+      top: 0,
       zIndex: 1200,
-      overflow: 'scroll',
-      boxShadow: '0 -10px 20px rgba(0,0,0,0.2)',
-      /** The dag */
-      paddingBottom: props.threshold,
     },
   };
 
-  /** Store translateY state with react-spring */
-  const start = window.innerHeight - options.defaultHeight;
-  const [{ y }, set] = useSpring(() => ({
-    y: start,
-    opacity: 0,
-  }));
+  /** generate stop position relative to window height */
+  const stopPosition = (relativeHeight: number) =>
+    window.innerHeight - relativeHeight;
 
-  /** Create position stop array */
-  const positions = [window.innerHeight - options.defaultHeight];
-  if (options.peekHeights)
-    positions.push(...options.peekHeights.map(h => window.innerHeight - h));
-  if (options.fullHeight) positions.push(0);
+  /** Create array of possible stop positions */
+  const defaultPosition = stopPosition(defaultHeight);
+  const stops = [defaultPosition];
 
-  /**
-   * Two problems here
-   * 1. if fullHeight = false and the child has a height greater than the max position, it should stop at the max position and allow scroll
-   * 2. peek heights are not allowing touch scroll when at full height (window.innherHeight)
-   *
-   * Consider re-writing and figuring out tests?
-   */
+  /** Track heights */
+  const [measureRef, { height }] = useMeasure({ polyfill: ResizeObserver });
 
-  /** The extra options.threshold is for the dag - ensuring we don't overpull the sheet */
-  const maxHeight =
-    window.innerHeight > height
-      ? Math.abs(window.innerHeight - height + options.threshold)
-      : 0;
+  let max = 0;
+  /** If it's taller than the window, clamp the stops at full screen */
+  if (height > window.innerHeight && fullHeight) {
+    stops.push(0);
+  }
 
-  /** Only push maxHeight to the stack if it's a value */
-  if (maxHeight < window.innerHeight) positions.push(maxHeight);
+  /** If the el is smaller than the window and larger than the default, add it as a stop. */
+  if (height < window.innerHeight && height > defaultHeight) {
+    max = stopPosition(height);
+    stops.push(max);
+  }
 
-  /** Track dragging state so we can prevent scroll */
-  const draggingRef = useRef(false);
+  /** Add peek heights if they are less than the max height */
+  peekHeights?.sort().forEach(peekHeight => {
+    if (peekHeight < height && peekHeight < window.innerHeight) {
+      stops.push(stopPosition(peekHeight));
+    }
+  });
 
-  /**
-   * Track container so we can scrollTop position and only
-   * begin pulling the drawer down when we're completely scrolled.
-   */
+  /** Track container scroll to prevent pulling when not at scrollTop */
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  /** Handle gesture */
-  const bind = useDrag(
-    ({ first, last, movement: [, my], cancel }) => {
-      /**
-       * Set dragging state on first and last frames.
-       * Used in checking whether to allow scroll or not.
-       */
-      if (first) draggingRef.current = true;
-      if (last) draggingRef.current = false;
+  /** Track animateable styles */
+  const [{ y }, set] = useSpring(() => ({
+    y: defaultPosition,
+  }));
 
-      /**
-       * Prevent the sheet from being pulled down if the
-       * contents have been scroll down, until back to top.
-       */
-      if (containerRef?.current?.scrollTop !== 0) {
+  /** Handle draging */
+  const bind = useDrag(
+    ({ last, cancel, movement: [, my] }) => {
+      /** Prevent drag if container isn't at top of scroll */
+      if (containerRef?.current?.scrollTop) {
         return;
       }
 
       /**
-       * Stop the user dragging further than they may. If the sheet is
-       * bigger than the window, then this should be 0.
+       * Cancel the drag if we either hit the top of the screen
+       * or a certain threshold above the max height (Defaults to 70px)
        */
-      if (
-        my > 0 &&
-        my < maxHeight - (window.innerHeight > height ? options.threshold : 0)
-      ) {
+      if (my < 0 || my < Math.min(...stops) - threshold) {
         cancel && cancel();
       }
 
-      /** On release, clamp to closest position stop */
+      /** On release, snap to closest stop position */
       if (last) {
-        const finalPosition = closest(y.getValue(), positions);
-
         set({
-          y: finalPosition < maxHeight ? maxHeight : finalPosition,
+          y: closest(my, stops),
           config: config.stiff,
         });
         return;
       }
 
-      /** Set position as the sheet is being dragged */
+      /** On each frame, set the y position */
       set({
         y: my,
-        immediate: false,
         config: { duration: 0 },
       });
     },
     {
+      /**
+       * If the container has been scrolled, we want the sheet
+       * to begin pulling down once the users gets back to the
+       * top of the scroll. initialising the my position as the
+       * negative value of the current scroll sets it to zero
+       * when the user gets to the top of the scrollable area.
+       */
       initial: () => [
         0,
-        containerRef.current && containerRef.current.scrollTop !== 0
-          ? -containerRef?.current?.scrollTop
+        containerRef.current?.scrollTop
+          ? -containerRef.current.scrollTop + Math.min(...stops)
           : y.getValue(),
       ],
       bounds: { top: 0 },
-      rubberband: true,
     }
   );
 
-  /** Prevent scroll while there is more to be swiped up */
-  const touchAction = y.to(v => (v > 0 ? 'none' : 'auto'));
-
-  const overflow = y.to(v => (v <= maxHeight ? 'scroll' : 'hidden'));
-
-  /** If hidden is set to true, hide the whole thing, */
+  /** If the hidden prop is true, hide the entire sheet off-screen */
   useEffect(() => {
     set({
-      y: options.hidden ? window.innerHeight + HIDDEN_THRESHOLD : start,
+      y: hidden ? window.innerHeight + 30 : defaultPosition,
       config: config.gentle,
     });
-  }, [options.hidden, set, start]);
+  }, [hidden, set, defaultPosition]);
 
   /** Set display:none when the drawer is hidden. */
-  const display = y.to(py =>
-    py < window.innerHeight + HIDDEN_THRESHOLD ? 'block' : 'none'
-  );
+  const display = y.to(py => (py < window.innerHeight + 30 ? 'block' : 'none'));
 
-  /** Show/hide background */
-  const backdropActiveAt = positions
-    .sort()
-    .reverse()
-    .find(n => n !== start && n < start);
+  /**
+   * Lock the scroll of the bottom sheet while it hasn't been
+   * pulled to its maximum possible height.
+   */
+  const overflow = y.to(v => (v > Math.min(...stops) ? 'hidden' : 'scroll'));
 
-  /** Animated styles for the backdrop based off the y position */
-  const backdropStyle = {
-    opacity: y.to([backdropActiveAt as number, start], [1, 0], 'clamp'),
-    display: y.to(py => (py < window.innerHeight ? 'block' : 'none')),
+  /** Aggregate main sheet props into an object for spreading */
+  const sheetStyle = {
+    y,
+    display,
+    overflow,
   };
 
-  console.log(touchAction.getValue(), overflow.getValue());
+  /** Animated styles for the backdrop based off the y position */
+  const backdropActiveAt = stops
+    .sort()
+    .reverse()
+    .find(n => n !== defaultPosition && n < defaultPosition);
+  const backdropStyle = {
+    /** backdrop should only begin to fade in after first stop */
+    opacity: y.to([backdropActiveAt as number, defaultPosition], [1, 0]),
+    /** Set display none when backdrop isn't show so you can interact with the page */
+    display: y.to(py => (py < defaultPosition && backdrop ? 'block' : 'none')),
+  };
+
+  /**
+   * Background is an image or carousel that slides up behind the main
+   * bottom sheet, similar to the venue images on Google maps.
+   */
+  const backgroundStyle = {
+    height: Math.min(...stops.filter(n => n > 0)),
+    y: y.to(
+      [...stops].reverse(),
+      stops.map((_stop, i, arr) =>
+        i === arr.length - 1 || i === arr.length - 2 ? window.innerHeight : 0
+      ),
+      'clamp'
+    ),
+  };
 
   return (
     <>
       <a.div
-        style={{
-          ...styles.backdrop,
-          ...userStyles.backdrop,
-          ...backdropStyle,
-        }}
-      />
-      <a.div
-        ref={containerRef}
         {...bind()}
-        style={{
-          ...styles.root,
-          ...userStyles.root,
-          y,
-          display,
-          touchAction,
-          overflow,
-        }}
+        ref={containerRef}
+        style={{ ...styles.root, ...userStyles.root, y, ...sheetStyle }}
       >
-        <div ref={ref}>{children}</div>
+        <div ref={measureRef}>{props.children}</div>
       </a.div>
+      {background && (
+        <a.div
+          style={{ ...styles.background, ...backgroundStyle }}
+          className="background"
+        >
+          {background}
+        </a.div>
+      )}
+      <a.div
+        style={{ ...styles.backdrop, ...userStyles.backdrop, ...backdropStyle }}
+      />
     </>
   );
 };
