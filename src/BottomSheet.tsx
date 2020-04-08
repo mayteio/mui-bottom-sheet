@@ -12,45 +12,54 @@ export interface bottomSheetOptions {
    * @default true
    */
   backdrop?: boolean;
+
   /**
    * Background component behind sheet. Requires at least two `peekHeights`.
    * @default null
    */
   background?: ReactElement;
-  /**
-   * Sheet height when in closed state.
-   * @default 100
-   */
-  defaultHeight: number;
-  /**
-   * Whether to go allow sheet to go full screen. If false, sheet will max out at largest peekHeight.
-   * @default true
-   */
-  fullHeight: boolean;
-  /**
-   * Completely hides the sheet when true.
-   * @default false
-   */
-  hidden: boolean | number;
+
   /**
    * Current peek index if you want to control the component.
    * @default 0;
    */
   currentIndex?: number;
+
+  /**
+   * Sheet height when in closed state.
+   * @default 100
+   */
+  defaultHeight: number;
+
+  /**
+   * Whether to go allow sheet to go full screen. If false, sheet will max out at largest peekHeight.
+   * @default true
+   */
+  fullHeight: boolean;
+
+  /**
+   * Completely hides the sheet when true.
+   * @default false
+   */
+  hidden: boolean | number;
+
   /**
    * Called when the user interacts and moves the bottomsheet to a new peek height
    */
   onIndexChange?: (index: number) => void;
+
   /**
    * Sheet will stop at certain heights to reveal more info.
    * @default []
    */
   peekHeights?: number[];
+
   /**
    * User styles for root, background and backdrop.
    * @default {root:{},background:{},backdrop:{}}
    */
   styles?: bottomSheetStyles;
+
   /**
    * Threshold for over-dragging the sheet before snapping to closest height.
    * @default 70
