@@ -1,5 +1,5 @@
-import React, { PropsWithChildren } from 'react';
-import { BottomSheet, BottomSheetProps } from '../src/BottomSheet';
+import React from 'react';
+import { BottomSheet } from '../src/BottomSheet';
 import { boolean, number, object } from '@storybook/addon-knobs';
 import { addParameters } from '@storybook/react';
 import backgroundImage from './static/buildings.jpg';
@@ -26,18 +26,6 @@ export default {
     ),
   ],
 };
-
-// By passing optional props to this story, you can control the props of the component when
-// you consume the story in a test.
-
-export const Default = (
-  props?: Partial<PropsWithChildren<BottomSheetProps>>
-) => (
-  <BottomSheet
-    children={<div style={{ height: 900, padding: 24 }}>Sheet content</div>}
-    {...props}
-  />
-);
 
 export const AllPropsAsKnobs = () => (
   <BottomSheet
@@ -140,3 +128,34 @@ export const WithLongContentAndBackground = () => (
     </BottomSheet>
   </>
 );
+
+export const ControlledModel = () => {
+  const [index, set] = React.useState<number | undefined>(2);
+  return (
+    <>
+      <div>
+        <p>Current index: {index}</p>
+        <button onClick={() => set(0)}>Close</button>
+        <br />
+        <button onClick={() => set(1)}>Peek height 250</button>
+        <br />
+        <button onClick={() => set(2)}>Peek height 400</button>
+        <br />
+        <button onClick={() => set(3)}>Full height</button>
+        <br />
+      </div>
+      <BottomSheet
+        currentIndex={index}
+        onIndexChange={set}
+        peekHeights={[250, 400]}
+        backdrop={false}
+        children={
+          <div style={{ height: 900, padding: 24, position: 'relative' }}>
+            Sheet content
+            <button onClick={() => set(0)}>Close</button>
+          </div>
+        }
+      />
+    </>
+  );
+};

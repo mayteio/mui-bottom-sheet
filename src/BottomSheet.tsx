@@ -33,6 +33,15 @@ export interface bottomSheetOptions {
    */
   hidden: boolean | number;
   /**
+   * Current peek index if you want to control the component.
+   * @default 0;
+   */
+  currentIndex?: number;
+  /**
+   * Called when the user interacts and moves the bottomsheet to a new peek height
+   */
+  onIndexChange?: (index: number) => void;
+  /**
    * Sheet will stop at certain heights to reveal more info.
    * @default []
    */
@@ -74,9 +83,11 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
     backdrop,
     background,
     defaultHeight,
+    hidden,
+    currentIndex,
+    onIndexChange,
     peekHeights,
     threshold,
-    hidden,
     styles: userStyles = { root: {}, backdrop: {} },
     fullHeight,
   } = {
@@ -171,10 +182,15 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
 
       /** On release, snap to closest stop position */
       if (last) {
+        const lastPosition = closest(my, stops);
         set({
-          y: closest(my, stops),
+          y: lastPosition,
           config: config.stiff,
         });
+
+        /** Call onIndexChange if it's set */
+        onIndexChange &&
+          onIndexChange(stops.findIndex(stop => stop === lastPosition));
         return;
       }
 
@@ -253,6 +269,21 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
       'clamp'
     ),
   };
+
+  /**
+   * Handle controlled component changes
+   */
+  useEffect(() => {
+    if (currentIndex !== undefined && y.getValue() !== stops[currentIndex]) {
+      if (!stops[currentIndex]) {
+        console.warn('No stop exists for the index you set.');
+      }
+      set({
+        y: stops[currentIndex],
+        config: config.stiff,
+      });
+    }
+  }, [currentIndex, stops, set, y, config]);
 
   return (
     <>
