@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { FC, ReactElement, useEffect, useRef } from 'react';
 import { a, useSpring, config } from 'react-spring';
 import { useDrag } from 'react-use-gesture';
 import useMeasure from 'react-use-measure';
@@ -6,21 +6,46 @@ import { ResizeObserver } from '@juggle/resize-observer';
 import { closest } from './util';
 
 export interface bottomSheetOptions {
-  /** Show backdrop that darkens as the sheet is pulled up. Defaults to true. */
+  /**
+   * Show backdrop that darkens as the sheet is pulled up. Defaults to true.
+   *
+   * @default true
+   */
   backdrop?: boolean;
-  /** Root component */
-  background?: React.ReactElement;
-  /** Sheet height when in closed state. Defaults to 100px. */
+  /**
+   * Background component behind sheet. Requires at least two `peekHeights`.
+   * @default null
+   */
+  background?: ReactElement;
+  /**
+   * Sheet height when in closed state.
+   * @default 100
+   */
   defaultHeight: number;
-  /** Whether to go to full screen height. defaults to false. */
+  /**
+   * Whether to go allow sheet to go full screen. If false, sheet will max out at largest peekHeight.
+   * @default true
+   */
   fullHeight: boolean;
-  /** Completely hides the sheet when true */
+  /**
+   * Completely hides the sheet when true.
+   * @default false
+   */
   hidden: boolean | number;
-  /** Sheet will stop at certain heights to reveal more info. Defaults to []. */
+  /**
+   * Sheet will stop at certain heights to reveal more info.
+   * @default []
+   */
   peekHeights?: number[];
-  /** User styles for root and backdrop */
+  /**
+   * User styles for root, background and backdrop.
+   * @default {root:{},background:{},backdrop:{}}
+   */
   styles?: bottomSheetStyles;
-  /** Threshold for over-dragging. Defaults to 70. */
+  /**
+   * Threshold for over-dragging the sheet before snapping to closest height.
+   * @default 70
+   */
   threshold: number;
 }
 
@@ -43,7 +68,7 @@ export const defaultOptions = {
   fullHeight: true,
 };
 
-export const BottomSheet: React.FC<BottomSheetProps> = props => {
+export const BottomSheet: FC<BottomSheetProps> = props => {
   /** Merge defaults and provided options */
   const {
     backdrop,
@@ -206,9 +231,10 @@ export const BottomSheet: React.FC<BottomSheetProps> = props => {
     .sort()
     .reverse()
     .find(n => n !== defaultPosition && n < defaultPosition);
+
   const backdropStyle = {
     /** backdrop should only begin to fade in after first stop */
-    opacity: y.to([backdropActiveAt as number, defaultPosition], [1, 0]),
+    opacity: y.to([(backdropActiveAt as number) || 0, defaultPosition], [1, 0]),
     /** Set display none when backdrop isn't show so you can interact with the page */
     display: y.to(py => (py < defaultPosition && backdrop ? 'block' : 'none')),
   };
@@ -239,7 +265,11 @@ export const BottomSheet: React.FC<BottomSheetProps> = props => {
       </a.div>
       {background && (
         <a.div
-          style={{ ...styles.background, ...backgroundStyle }}
+          style={{
+            ...styles.background,
+            ...userStyles.background,
+            ...backgroundStyle,
+          }}
           className="background"
         >
           {background}
