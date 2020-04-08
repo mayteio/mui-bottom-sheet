@@ -34,6 +34,18 @@
     "trailingComma": "es5"
   },
   "name": "mui-bottom-sheet",
+  "keywords": [
+    "material design",
+    "mui",
+    "bottom sheet",
+    "action sheet",
+    "bottom drawer",
+    "sheet",
+    "react",
+    "react-spring",
+    "react-use-gesture",
+    "google maps"
+  ],
   "author": "Harley Alexander",
   "module": "dist/mui-bottom-sheet.esm.js",
   "devDependencies": {

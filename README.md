@@ -1,8 +1,49 @@
-# `bottom-sheet`
+# `mui-bottom-sheet`
 
-Features:
+> 👆 A delightful bottom sheet component for react up to material design spec
 
-- peek heights - make drawer stop at specific heights on the way up to full screen
-- clamp to max height - if the contents are smaller than full screen, clamp it
-- hide completely with hidden prop
-- backdrop fades in and out as you swipe up
+The bottom sheet in the Google Maps app for a location is _really_ nice. I set out to recreate that level of UX detail with a modern `BottomSheet` for React. [Try it in the storybook]().
+
+![Bottom Sheet Demo](https://user-images.githubusercontent.com/43975092/78733881-0f751300-798a-11ea-8c9c-62cda96fc35b.gif)
+
+Under the hood it uses `react-spring` for delightful animations and `react-use-gesture` to handle dragging. This is still a work in progress - let me know features you'd like and I'll add them in.
+
+## Installation
+
+```bash
+yarn add mui-bottom-sheet
+```
+
+## Usage
+
+```js
+import React from 'react';
+import { BottomSheet } from 'mui-bottom-sheet';
+
+export const App = () => {
+  return <BottomSheet>Add your content here</BottomSheet>;
+};
+```
+
+## Props (options)
+
+| prop            | type                                         | description                                                                                                                                                            | default                                      |
+| --------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `backdrop`      | `boolean?`                                   | Whether to show the transparent backdrop that fades in as you pull up.                                                                                                 | `true`                                       |
+| `background`    | `React.ReactElement?`                        | Background element that slides up behind the main bottom sheet.                                                                                                        | `null`                                       |
+| `defaultHeight` | `number?`                                    | Default height when the sheet is closed.                                                                                                                               | `100`                                        |
+| `hidden`        | `boolean?`                                   | When true, the sheet will completely hide at the bottom of the screen.                                                                                                 | `false`                                      |
+| `fullHeight`    | `boolean?`                                   | Whether to allow the sheet to go 100% of the screen height. If false, the highest it can go is the maximum of `peekHeights`. Otherwise it'll stick to `defaultHeight`. | `true`                                       |
+| `peekHeights`   | `number[]?`                                  | Progressive peek heights for the bottom sheet to stop at. Use this to reveal more detailed information as the sheet is pulled up.                                      | `[]`                                         |
+| `styles`        | `{ root: {}, backdrop: {}, background: {} }` | Pass additional styles to either the sheet, the backdrop or the background components                                                                                  | `{ root: {}, backdrop: {}, background: {} }` |
+| `threshold`     | `number?`                                    | The threshold for over-dragging the sheet above its maximum height before it snaps to the highest position.                                                            | `70`                                         |
+
+## Upcoming
+
+- [ ] Cypress tests - Jest doesn't play nicely with dragging and dropping. Help appreciated.
+- [ ] Hooks API for binding custom components instead of a prescribed `animated.div`
+- [ ] Programatically set stop height
+- [ ] Access to current stop index
+- [ ] `open()` and `close()` for programatic interaction
+- [ ] passing custom `react-spring` config
+- [ ] anything else?

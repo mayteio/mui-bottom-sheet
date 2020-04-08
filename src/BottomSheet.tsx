@@ -206,9 +206,10 @@ export const BottomSheet: React.FC<BottomSheetProps> = props => {
     .sort()
     .reverse()
     .find(n => n !== defaultPosition && n < defaultPosition);
+
   const backdropStyle = {
     /** backdrop should only begin to fade in after first stop */
-    opacity: y.to([backdropActiveAt as number, defaultPosition], [1, 0]),
+    opacity: y.to([(backdropActiveAt as number) || 0, defaultPosition], [1, 0]),
     /** Set display none when backdrop isn't show so you can interact with the page */
     display: y.to(py => (py < defaultPosition && backdrop ? 'block' : 'none')),
   };
@@ -239,7 +240,11 @@ export const BottomSheet: React.FC<BottomSheetProps> = props => {
       </a.div>
       {background && (
         <a.div
-          style={{ ...styles.background, ...backgroundStyle }}
+          style={{
+            ...styles.background,
+            ...userStyles.background,
+            ...backgroundStyle,
+          }}
           className="background"
         >
           {background}
