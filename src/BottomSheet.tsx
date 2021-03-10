@@ -235,7 +235,7 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
         0,
         containerRef.current?.scrollTop
           ? -containerRef.current.scrollTop + Math.min(...stops)
-          : y.getValue(),
+          : y.goal,
       ],
       bounds: { top: 0 },
     }
@@ -297,7 +297,7 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
    * Handle controlled component changes
    */
   useEffect(() => {
-    if (currentIndex !== undefined && y.getValue() !== stops[currentIndex]) {
+    if (currentIndex !== undefined && y.goal !== stops[currentIndex]) {
       if (!stops[currentIndex]) {
         console.warn('No stop exists for the index you set.');
       }
