@@ -167,12 +167,21 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
     stops.push(max);
   }
 
-  /** Add peek heights if they are less than the max height */
-  peekHeights?.sort().forEach(peekHeight => {
+  /** Add peek heights if they are less than the max height.
+   * To don't mess with snap indexes we don't add the peek height if it already in the stops array
+   */
+  peekHeights?.forEach(peekHeight => {
     if (peekHeight < height && peekHeight < window.innerHeight) {
-      stops.push(stopPosition(peekHeight));
+      if (!stops.includes(stopPosition(peekHeight))) {
+        stops.push(stopPosition(peekHeight));
+      }
     }
   });
+
+  /** By using stopPosition, y-axis is defined from top to bottom,
+  but in peekHeights context, y-axis is defined from bottom to top,
+  so we have to use descending sort here to have a proper matching between stops and snap indexes */
+  stops.sort((a, b) => b - a);
 
   /** Track container scroll to prevent pulling when not at scrollTop */
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -266,8 +275,7 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
   };
 
   /** Animated styles for the backdrop based off the y position */
-  const backdropActiveAt = stops
-    .sort()
+  const backdropActiveAt = [...stops]
     .reverse()
     .find(n => n !== defaultPosition && n < defaultPosition);
 
@@ -306,7 +314,7 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
         config: springConfig,
       });
     }
-  }, [currentIndex, stops, set, y]);
+  }, [currentIndex, stops, set, y, springConfig]);
 
   return (
     <>
