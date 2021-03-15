@@ -243,7 +243,8 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
       initial: () => [
         0,
         containerRef.current?.scrollTop
-          ? -containerRef.current.scrollTop + Math.min(...stops)
+          ? // @ts-ignore
+            -containerRef.current.scrollTop + Math.min(...stops)
           : y.goal,
       ],
       bounds: { top: 0 },
@@ -321,6 +322,7 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
       <a.div
         {...bind()}
         ref={containerRef}
+        // @ts-ignore
         style={{ ...styles.root, ...userStyles.root, y, ...sheetStyle }}
       >
         <div ref={measureRef}>{props.children}</div>
@@ -338,6 +340,7 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
         </a.div>
       )}
       <a.div
+        // @ts-ignore
         style={{ ...styles.backdrop, ...userStyles.backdrop, ...backdropStyle }}
       />
     </>
