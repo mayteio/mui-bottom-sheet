@@ -55,6 +55,12 @@ export interface bottomSheetOptions {
   peekHeights?: number[];
 
   /**
+   * Which spring config to use for snapping the sheet
+   * @default config.stiff
+   */
+  springConfig: Record<string, any>;
+
+  /**
    * User styles for root, background and backdrop.
    * @default {root:{},background:{},backdrop:{}}
    */
@@ -80,10 +86,12 @@ export const defaultOptions = {
   backdrop: true,
   background: null,
   defaultHeight: 100,
-  threshold: 70,
-  peekHeights: [],
-  hidden: false,
   fullHeight: true,
+  hidden: false,
+  peekHeights: [],
+  springConfig: config.stiff,
+  styles: { root: {}, backdrop: {}, background: {} },
+  threshold: 70,
 };
 
 export const BottomSheet: FC<BottomSheetProps> = props => {
@@ -91,14 +99,15 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
   const {
     backdrop,
     background,
-    defaultHeight,
-    hidden,
     currentIndex,
+    defaultHeight,
+    fullHeight,
+    hidden,
     onIndexChange,
     peekHeights,
+    springConfig,
+    styles: userStyles,
     threshold,
-    styles: userStyles = { root: {}, backdrop: {} },
-    fullHeight,
   } = {
     ...defaultOptions,
     ...props,
@@ -175,7 +184,12 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
 
   /** Handle draging */
   const bind = useDrag(
-    ({ last, cancel, movement: [, my] }) => {
+    ({ last, cancel, movement: [, my], direction: [dx] }) => {
+      /** If the drag is feeling more horizontal than vertical, cancel */
+      if (dx < -0.8 || dx > 0.8) {
+        cancel && cancel();
+      }
+
       /** Prevent drag if container isn't at top of scroll */
       if (containerRef?.current?.scrollTop) {
         return;
@@ -194,7 +208,7 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
         const lastPosition = closest(my, stops);
         set({
           y: lastPosition,
-          config: config.stiff,
+          config: springConfig,
         });
 
         /** Call onIndexChange if it's set */
@@ -221,7 +235,7 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
         0,
         containerRef.current?.scrollTop
           ? -containerRef.current.scrollTop + Math.min(...stops)
-          : y.getValue(),
+          : y.goal,
       ],
       bounds: { top: 0 },
     }
@@ -242,13 +256,13 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
    * Lock the scroll of the bottom sheet while it hasn't been
    * pulled to its maximum possible height.
    */
-  const overflow = y.to(v => (v > Math.min(...stops) ? 'hidden' : 'scroll'));
+  const overflowY = y.to(v => (v > Math.min(...stops) ? 'hidden' : 'scroll'));
 
   /** Aggregate main sheet props into an object for spreading */
   const sheetStyle = {
     y,
     display,
-    overflow,
+    overflowY,
   };
 
   /** Animated styles for the backdrop based off the y position */
@@ -283,16 +297,16 @@ export const BottomSheet: FC<BottomSheetProps> = props => {
    * Handle controlled component changes
    */
   useEffect(() => {
-    if (currentIndex !== undefined && y.getValue() !== stops[currentIndex]) {
+    if (currentIndex !== undefined && y.goal !== stops[currentIndex]) {
       if (!stops[currentIndex]) {
         console.warn('No stop exists for the index you set.');
       }
       set({
         y: stops[currentIndex],
-        config: config.stiff,
+        config: springConfig,
       });
     }
-  }, [currentIndex, stops, set, y, config]);
+  }, [currentIndex, stops, set, y]);
 
   return (
     <>
