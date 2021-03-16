@@ -14,8 +14,7 @@
     "start": "tsdx watch",
     "build": "tsdx build",
     "test": "tsdx test --passWithNoTests --env=jest-environment-jsdom-sixteen",
-    "lint": "tsdx lint",
-    "prepare": "tsdx build"
+    "lint": "tsdx lint"
   },
   "peerDependencies": {
     "react": ">=16"
